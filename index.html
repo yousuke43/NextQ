@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextQ - 思考の深淵へ</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --accent-color: #2c3e50;
+            --question-color: #5f6c7b;
+            --user-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --header-height: 60px;
+            --input-area-height: 130px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: var(--header-height);
+            z-index: 100;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
+        }
+
+        button#download-btn {
+            background-color: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        button#download-btn:hover {
+            background-color: white;
+            color: var(--accent-color);
+        }
+
+        /* チャットエリア */
+        #chat-container {
+            padding-top: calc(var(--header-height) + 1.5rem);
+            padding-bottom: calc(var(--input-area-height) + 1rem);
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .message-block {
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 質問（AI）のスタイル */
+        .question-box {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .question-box::before {
+            content: "Q.";
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            flex: 1;
+        }
+
+        .change-question-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: #999;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .change-question-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background-color: rgba(44, 62, 80, 0.05);
+        }
+
+        /* ユーザーの回答スタイル */
+        .answer-box {
+            background-color: var(--user-bg);
+            border-left: 4px solid var(--border-color);
+            padding: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap; /* 改行を反映 */
+            word-break: break-word;
+            overflow-wrap: break-word;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* 入力エリア */
+        #input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .input-wrapper {
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            resize: none; /* サイズ変更不可 */
+            height: 60px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        /* アニメーション */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* タブレット対応 */
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 56px;
+                --input-area-height: 120px;
+            }
+
+            header {
+                padding: 0.8rem 1rem;
+            }
+
+            h1 {
+                font-size: 1.1rem;
+            }
+
+            button#download-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            #chat-container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            #input-area {
+                padding: 0.8rem 1rem;
+            }
+        }
+
+        /* スマホ対応 */
+        @media (max-width: 480px) {
+            :root {
+                --header-height: 52px;
+                --input-area-height: 110px;
+            }
+
+            header {
+                padding: 0.6rem 0.8rem;
+            }
+
+            h1 {
+                font-size: 1rem;
+            }
+
+            button#download-btn {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.85rem;
+            }
+
+            #chat-container {
+                padding-left: 0.8rem;
+                padding-right: 0.8rem;
+                padding-top: calc(var(--header-height) + 1rem);
+                padding-bottom: calc(var(--input-area-height) + 0.5rem);
+            }
+
+            .message-block {
+                margin-bottom: 1.2rem;
+            }
+
+            .question-box {
+                font-size: 0.95rem;
+            }
+
+            .question-box::before {
+                padding: 2px 6px;
+                font-size: 0.75rem;
+                margin-right: 8px;
+            }
+
+            .answer-box {
+                padding: 0.8rem;
+                font-size: 0.95rem;
+            }
+
+            #input-area {
+                padding: 0.6rem 0.8rem;
+            }
+
+            textarea {
+                font-size: 16px; /* ズーム防止 */
+                height: 50px;
+                padding: 0.8rem;
+            }
+
+            .hint {
+                font-size: 0.7rem;
+                margin-top: 3px;
+            }
+        }
+
+        /* 非常に小さい画面 */
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 0.9rem;
+                letter-spacing: 0.05em;
+            }
+
+            button#download-btn {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>NextQ　思考の深淵へ</h1>
+    <button id="download-btn" onclick="downloadLog()">保存</button>
+</header>
+
+<main id="chat-container">
+    <div class="message-block" id="current-question-block">
+        <div class="question-box">
+            <span class="question-text">今、頭の中にあること、または直面している課題は何ですか？</span>
+        </div>
+    </div>
+</main>
+
+<div id="input-area">
+    <div class="input-wrapper">
+        <textarea id="user-input" placeholder="ここに思考を書き出し、Enterで深める..." autofocus></textarea>
+        <div class="hint">Shift + Enterで改行 / Enterで送信</div>
+    </div>
+</div>
+
+<script>
+    // 30の思考深化・コンテクストフリー質問リスト
+    const questions = [
+        "今、頭の中にあること、または直面している課題は何ですか？",
+        "その中で、最も重要な「一言」を挙げるとしたら何ですか？",
+        "なぜ、他のことではなく「そのこと」を書いたのでしょうか？",
+        "それを全く知らない人に説明するとしたら、最初に何を伝えますか？",
+        "その言葉の裏側に隠れている「前提」は何ですか？",
+        "それは、あなたにとって「変えられること」ですか？「変えられないこと」ですか？",
+        "その内容を「色」や「形」で表現するとしたら、どんなイメージですか？",
+        "最も確かな「事実」と、あなたの「解釈」を分けて整理するとどうなりますか？",
+        "それを考える上で、一番邪魔をしている「先入観」は何だと思いますか？",
+        "その件について、あなたが「絶対に譲れないこと」は何ですか？",
+        "それを解決（または達成）したとき、何が一番大きく変わりますか？",
+        "その逆のパターンを、あえて「正しい」と仮定して考えてみてください。",
+        "まったく別の価値観を持つ人なら、それをどう解釈するでしょうか？",
+        "それが「解決した後の世界」から今を振り返ると、何が見えますか？",
+        "もし、今の状況が「完璧なプロセス」だとしたら、どんな意味がありますか？",
+        "その件について、あと3つ別の捉え方を挙げてください。",
+        "そのことと「全く無関係な趣味」を無理やり結びつけて考えてみてください。",
+        "もし、今の制限がすべてなくなったら、どうしたいですか？",
+        "逆に、もっと厳しい制限がかかったら、どう工夫しますか？",
+        "誰にも知られずにそれを行うとしたら、何を変えますか？",
+        "その考えを「100倍の規模」に拡大して想像してみてください。",
+        "あなたが「正しい」と確信していることを、一度疑ってみてください。",
+        "その考えの「一番脆いところ」はどこですか？",
+        "誰かがそれに反対するとしたら、どんな理由で反対しますか？",
+        "その言葉の中に「自分の都合の良い解釈」は混ざっていませんか？",
+        "それが失敗する確率が1%あるとしたら、原因は何だと思いますか？",
+        "あなたが「見ないようにしている事実」はありませんか？",
+        "その結論を出すには、まだ情報が足りない部分はありませんか？",
+        "今、それを書いているときの「体の感覚」はどうですか？",
+        "その言葉を発したとき、心は「軽く」なりましたか？「重く」なりましたか？",
+        "今すぐできる「最も小さな一歩」は何ですか？",
+        "それを一言で「要するに」と言うと、何になりますか？",
+    "その言葉の定義を、辞書にはない「あなたなりの言葉」で説明すると？",
+    "それは「誰のため」のものですか？",
+    "その件について、まだ言葉にできていない「モヤモヤ」は残っていませんか？",
+    "それを構成する要素の中で、一番「美しい」と思う部分はどこですか？",
+    "もし、それが「形」を持っているとしたら、どんな見た目をしていますか？",
+    "その考えの中心にある「キーワード」を3つ抜き出してください。",
+    "それは、あなたの人生における「どのジャンル」の話ですか？",
+    "それを考えることは、あなたにとって「義務」ですか？「権利」ですか？",
+    "その話の「主役」は誰ですか？",
+
+    // --- 時間軸・歴史・未来 ---
+    "10年後の今日、そのことを覚えていると思いますか？",
+    "それを始めた（考え始めた）「最初のきっかけ」は何でしたか？",
+    "もし、時間が無限にあるとしたら、アプローチは変わりますか？",
+    "逆に、締め切りが「あと1時間」だとしたら、どう結論づけますか？",
+    "過去に似たようなパターンを繰り返していませんか？",
+    "それを解決（達成）したら、次に待っているものは何ですか？",
+    "もし、時代が100年前（または100年後）なら、それは問題になりますか？",
+    "その件について、昨日より「進んだ」と言える点はありますか？",
+    "今の状態を「第1章」とすると、最終章はどう終わりますか？",
+    "それを「やめる」タイミングは、いつに設定しますか？",
+
+    // --- 視点の移動・他者 ---
+    "もし、あなたが「神様」の視点を持っていたら、今の状況をどう見ますか？",
+    "それを、あなたの「一番大切な人」に話すとしたら、どう伝えますか？",
+    "もし、世界中の全員があなたと同じ考えを持ったら、世界はどうなりますか？",
+    "その件に関して、一番「冷めた目」で見ている人は誰ですか？",
+    "もし、あなたが映画の監督なら、このシーンでどんなBGMを流しますか？",
+    "その考えに対して、AIならどんな冷徹な答えを出すと思いますか？",
+    "もし、性別や年齢が逆転したら、感じ方は変わりますか？",
+    "その件について、誰かからの「許可」を待っていませんか？",
+    "もし、これが「他人の悩み」だとしたら、あなたは何とアドバイスしますか？",
+    "その考えを支持してくれる人は、世界に何人くらいいそうですか？",
+
+    // --- 反転・否定・リスク ---
+    "もし、その前提が「100%間違っている」としたら？",
+    "あえて「最悪の選択」をするとしたら、何をすることですか？",
+    "それをすることで失うもの（代償）は何ですか？",
+    "その考えの「嘘」や「欺瞞」が含まれているとしたら、どこですか？",
+    "「シンプルにする」のではなく、あえて「複雑に」考えてみると？",
+    "何もしないで放置した場合、自然に解決する可能性はありますか？",
+    "その中にある「矛盾」を見つけてください。",
+    "もし、すべてが「偶然」だとしたら？",
+    "あなたが一番「認めたくないこと」は何ですか？",
+    "「成功」と「失敗」の境界線はどこにありますか？",
+
+    // --- 感情・エネルギー・行動 ---
+    "今、そのことを考えているとき、呼吸は深いですか？浅いですか？",
+    "それは、あなたのエネルギーを「与える」ものですか？「奪う」ものですか？",
+    "その件について、正直「面倒くさい」と思っている部分はどこですか？",
+    "それを考えると、ワクワクしますか？それともホッとしますか？",
+    "今、立ち上がって身体を動かすとしたら、どんな動作が似合いますか？",
+    "そのために、今日「捨てられるもの」はありますか？",
+    "それを完了させるために、いくら（金銭・時間）なら払えますか？",
+    "まだ「本気を出していない」だけではありませんか？",
+    "その思考の旅の「ゴール」は、今見えていますか？",
+    "最後に、自分自身に一つだけ質問するとしたら、何と聞きますか？"
+    ];
+
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    
+    // ログ保存用の配列
+    let conversationLog = [];
+    
+    // 現在の質問ブロックを追跡
+    let currentQuestionBlock = document.getElementById('current-question-block');
+    
+    // 初期質問のログ追加
+    conversationLog.push({
+        role: 'Question',
+        text: '今、頭の中にあること、または直面している課題は何ですか？'
+    });
+
+    // 現在の質問を変更する関数
+    function changeCurrentQuestion() {
+        const newQuestion = questions[Math.floor(Math.random() * questions.length)];
+        const questionTextEl = currentQuestionBlock.querySelector('.question-text');
+        
+        if (questionTextEl) {
+            questionTextEl.textContent = newQuestion;
+            // ログの最後の質問も更新
+            if (conversationLog.length > 0 && conversationLog[conversationLog.length - 1].role === 'Question') {
+                conversationLog[conversationLog.length - 1].text = newQuestion;
+            }
+        }
+    }
+
+    // 入力イベントリスナー
+    userInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const text = this.value.trim();
+            
+            if (text) {
+                submitAnswer(text);
+            }
+        }
+    });
+
+    function submitAnswer(text) {
+        // 1. ユーザーの回答を表示
+        appendMessage('answer', text);
+        conversationLog.push({ role: 'Answer', text: text });
+        
+        // 入力欄をクリア
+        userInput.value = '';
+
+        // 2. ランダムな質問を選定して表示（少し遅延させて自然に見せる）
+        setTimeout(() => {
+            const randomQ = questions[Math.floor(Math.random() * questions.length)];
+            appendQuestion(randomQ);
+            conversationLog.push({ role: 'Question', text: randomQ });
+            
+            // 下までスクロール
+            scrollToBottom();
+        }, 300);
+        
+        scrollToBottom();
+    }
+
+    function appendQuestion(text) {
+        // 前の質問ブロックから変更ボタンを削除
+        const prevBtn = currentQuestionBlock.querySelector('.change-question-btn');
+        if (prevBtn) {
+            prevBtn.remove();
+        }
+        
+        // 新しい質問ブロックを作成
+        const div = document.createElement('div');
+        div.className = 'message-block';
+        div.innerHTML = `<div class="question-box">
+            <span class="question-text">${text}</span>
+            <button class="change-question-btn" onclick="changeCurrentQuestion()">別の質問</button>
+        </div>`;
+        
+        chatContainer.appendChild(div);
+        currentQuestionBlock = div;
+    }
+
+    function appendMessage(type, text) {
+        const div = document.createElement('div');
+        div.className = 'message-block'; // ブロックごと囲む
+        
+        if (type === 'question') {
+            div.innerHTML = `<div class="question-box"><span class="question-text">${text}</span></div>`;
+        } else {
+            // ユーザーの回答は直前のブロックに追加したいが、
+            // 構造上、QとAのセットにするより時系列で追加していく方が単純かつ柔軟
+            // 直前のQの下にAが来るように見えるデザインにしている
+            div.innerHTML = `<div class="answer-box">${escapeHtml(text)}</div>`;
+        }
+        
+        chatContainer.appendChild(div);
+    }
+
+    function scrollToBottom() {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+
+    // HTMLエスケープ処理
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[<>&"']/g, function(match) {
+            const escape = {
+                '<': '&lt;',
+                '>': '&gt;',
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&#39;'
+            };
+            return escape[match];
+        });
+    }
+
+    // ダウンロード機能
+    function downloadLog() {
+        if (conversationLog.length === 0) return;
+
+        let content = "# DeepEnter 思考ログ\n\n";
+        const date = new Date().toLocaleString();
+        content += `日時: ${date}\n\n---\n\n`;
+
+        conversationLog.forEach(item => {
+            if (item.role === 'Question') {
+                content += `### Q. ${item.text}\n\n`;
+            } else {
+                content += `${item.text}\n\n`;
+            }
+        });
+
+        const blob = new Blob([content], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        
+        // ファイル名に日付を入れる
+        const timestamp = new Date().toISOString().slice(0,10).replace(/-/g, '');
+        link.download = `deep_enter_log_${timestamp}.txt`;
+        
+        link.click();
+    }
+</script>
+
+</body>
+</html>
