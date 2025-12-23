@@ -358,9 +358,8 @@
         "その結論を出すには、まだ情報が足りない部分はありませんか？",
         "今、それを書いているときの「体の感覚」はどうですか？",
         "その言葉を発したとき、心は「軽く」なりましたか？「重く」なりましたか？",
-        "今すぐできる「最も小さな一歩」は何ですか？",
-        "それを一言で「要するに」と言うと、何になりますか？",
-    
+        "今すぐできる「最も小さな一歩」は何ですか？"
+        
     ];
 
     const chatContainer = document.getElementById('chat-container');
@@ -389,6 +388,30 @@
             if (conversationLog.length > 0 && conversationLog[conversationLog.length - 1].role === 'Question') {
                 conversationLog[conversationLog.length - 1].text = newQuestion;
             }
+        }
+    }
+
+    // 入力欄にフォーカスしたとき、現在の質問が見えるようにスクロール
+    userInput.addEventListener('focus', function() {
+        // 少し遅延させてキーボードが開いた後にスクロール
+        setTimeout(() => {
+            scrollToCurrentQuestion();
+        }, 300);
+    });
+
+    // Visual Viewport APIでキーボード表示を検知（対応ブラウザのみ）
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+            // キーボードが開いたと思われる場合
+            if (document.activeElement === userInput) {
+                scrollToCurrentQuestion();
+            }
+        });
+    }
+
+    function scrollToCurrentQuestion() {
+        if (currentQuestionBlock) {
+            currentQuestionBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -511,5 +534,4 @@
 </script>
 
 </body>
-
 </html>
